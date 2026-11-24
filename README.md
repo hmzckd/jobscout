@@ -127,7 +127,7 @@ Open `http://localhost:8080` and try:
 ### 3. Watch a change travel from PostgreSQL to search
 
 ```powershell
-$company = Invoke-RestMethod -Method Post -Uri http://localhost:8080/api/companies -ContentType "application/json" -Body '{"name":"Kuzey Yazılım"}'
+$company = Invoke-RestMethod -Method Post -Uri http://localhost:8080/api/companies -ContentType "application/json; charset=utf-8" -Body ([Text.Encoding]::UTF8.GetBytes('{"name":"Kuzey Yazılım"}'))
 $job = @{ companyId = $company.id; title = "Zig Geliştirici"; description = "Sistem programlama ekibimize katıl."; city = "Eskişehir"; workMode = "REMOTE"; seniority = "MID"; skills = @("Zig", "Linux") } | ConvertTo-Json
 Invoke-RestMethod -Method Post -Uri http://localhost:8080/api/jobs -ContentType "application/json; charset=utf-8" -Body ([Text.Encoding]::UTF8.GetBytes($job))
 Invoke-RestMethod "http://localhost:8080/api/search?q=zig"
