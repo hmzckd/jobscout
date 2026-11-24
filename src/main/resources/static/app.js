@@ -16,9 +16,11 @@ function highlighted(text) {
 }
 
 function salary(job) {
-  if (job.salaryMin == null) return '';
   const fmt = (n) => n.toLocaleString('tr-TR');
-  return ` · ${fmt(job.salaryMin)} - ${fmt(job.salaryMax)} TL`;
+  if (job.salaryMin != null && job.salaryMax != null) return ` · ${fmt(job.salaryMin)} - ${fmt(job.salaryMax)} TL`;
+  if (job.salaryMin != null) return ` · en az ${fmt(job.salaryMin)} TL`;
+  if (job.salaryMax != null) return ` · en fazla ${fmt(job.salaryMax)} TL`;
+  return '';
 }
 
 function params() {
@@ -29,9 +31,12 @@ function params() {
   return p;
 }
 
+let searchSeq = 0;
 async function search() {
+  const seq = ++searchSeq;
   const response = await fetch(`/api/search?${params()}`);
   const result = await response.json();
+  if (seq !== searchSeq) return;
   if (!response.ok) {
     $('summary').textContent = result.detail || 'Arama yapılamadı';
     return;
@@ -62,23 +67,28 @@ function renderResults(result) {
 function renderFacets(facets) {
   $('facets').innerHTML = Object.entries(facets).map(([name, values]) => {
     const selected = state.filters[name];
-    const items = values.map((v) => `<label>
+    const shown = values.map((v) => v.value);
+    const missing = selected.filter((v) => !shown.includes(v)).map((v) => ({ value: v, count: null }));
+    const items = [...values, ...missing].map((v) => `<label>
         <input type="checkbox" data-facet="${name}" value="${escapeHtml(v.value)}" ${selected.includes(v.value) ? 'checked' : ''}>
-        ${escapeHtml(labels[v.value] || v.value)}<span class="count">${v.count}</span>
+        ${escapeHtml(labels[v.value] || v.value)}${v.count == null ? '' : `<span class="count">${v.count}</span>`}
       </label>`).join('');
     return `<h2>${facetTitles[name]}</h2>${items}`;
   }).join('');
 }
 
 let suggestTimer;
+let suggestSeq = 0;
 async function suggest(text) {
   const list = $('suggestions');
+  const seq = ++suggestSeq;
   if (text.trim().length < 2) {
     list.hidden = true;
     return;
   }
   const response = await fetch(`/api/suggest?${new URLSearchParams({ q: text })}`);
   const titles = response.ok ? await response.json() : [];
+  if (seq !== suggestSeq) return;
   list.innerHTML = titles.map((t) => `<li role="option">${escapeHtml(t)}</li>`).join('');
   list.hidden = titles.length === 0;
 }
