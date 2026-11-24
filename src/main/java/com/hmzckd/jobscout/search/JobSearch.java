@@ -3,6 +3,7 @@ package com.hmzckd.jobscout.search;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -40,29 +41,53 @@ public class JobSearch {
 	}
 
 	public SearchResult search(SearchQuery query) {
+		List<Filter> facetFilters = facetFilters(query);
 		try {
-			SearchResponse<JobDocument> response = client.search(s -> s
-					.index(index.name())
-					.query(buildQuery(query))
-					.sort(sortOptions(query))
-					.from(query.page() * query.size())
-					.size(query.size())
-					.trackTotalHits(t -> t.enabled(true))
-					.highlight(h -> h
-							.preTags("<em>").postTags("</em>")
-							.fields(NamedValue.of("title", HighlightField.of(f -> f.numberOfFragments(0))))
-							.fields(NamedValue.of("description",
-									HighlightField.of(f -> f.fragmentSize(150).numberOfFragments(1))))),
-					JobDocument.class);
+			SearchResponse<JobDocument> response = client.search(s -> {
+				s.index(index.name())
+						.query(baseQuery(query))
+						.postFilter(allOf(facetFilters, null))
+						.sort(sortOptions(query))
+						.from(query.page() * query.size())
+						.size(query.size())
+						.trackTotalHits(t -> t.enabled(true))
+						.highlight(h -> h
+								.preTags("<em>").postTags("</em>")
+								.fields(NamedValue.of("title", HighlightField.of(f -> f.numberOfFragments(0))))
+								.fields(NamedValue.of("description",
+										HighlightField.of(f -> f.fragmentSize(150).numberOfFragments(1)))));
+				for (Facet facet : Facet.values()) {
+					s.aggregations(facet.key, a -> a
+							.filter(allOf(facetFilters, facet.field))
+							.aggregations("values", v -> v.terms(t -> t.field(facet.field).size(facet.size))));
+				}
+				return s;
+			}, JobDocument.class);
 			List<JobHit> hits = response.hits().hits().stream().map(JobSearch::toHit).toList();
-			return new SearchResult(response.hits().total().value(), query.page(), query.size(), hits);
+			return new SearchResult(response.hits().total().value(), query.page(), query.size(), hits,
+					facets(response));
 		}
 		catch (IOException e) {
 			throw new UncheckedIOException(e);
 		}
 	}
 
-	static Query buildQuery(SearchQuery query) {
+	enum Facet {
+		CITY("city", "city", 20), WORK_MODE("workMode", "workMode", 3), SENIORITY("seniority", "seniority", 4),
+		SKILL("skill", "skills", 20);
+
+		final String key;
+		final String field;
+		final int size;
+
+		Facet(String key, String field, int size) {
+			this.key = key;
+			this.field = field;
+			this.size = size;
+		}
+	}
+
+	static Query baseQuery(SearchQuery query) {
 		return Query.of(q -> q.bool(b -> {
 			for (String term : query.terms()) {
 				b.must(m -> m.multiMatch(mm -> mm
@@ -77,10 +102,6 @@ public class JobSearch {
 				b.should(s -> s.matchPhrase(p -> p.field("title.folded").query(query.text()).boost(2f)));
 			}
 			b.filter(f -> f.term(t -> t.field("status").value("OPEN")));
-			for (Filter filter : filters(query)) {
-				b.filter(f -> f.terms(t -> t.field(filter.field())
-						.terms(v -> v.value(filter.values().stream().map(FieldValue::of).toList()))));
-			}
 			if (query.minSalary() != null) {
 				b.filter(f -> f.range(r -> r.number(n -> n.field("salaryMax").gte(query.minSalary().doubleValue()))));
 			}
@@ -91,7 +112,7 @@ public class JobSearch {
 	record Filter(String field, List<String> values) {
 	}
 
-	static List<Filter> filters(SearchQuery query) {
+	static List<Filter> facetFilters(SearchQuery query) {
 		List<Filter> filters = new ArrayList<>();
 		if (!query.cities().isEmpty()) {
 			filters.add(new Filter("city", query.cities()));
@@ -106,6 +127,30 @@ public class JobSearch {
 			filters.add(new Filter("skills", query.skills()));
 		}
 		return filters;
+	}
+
+	static Query allOf(List<Filter> filters, String exceptField) {
+		return Query.of(q -> q.bool(b -> {
+			for (Filter filter : filters) {
+				if (!filter.field().equals(exceptField)) {
+					b.filter(f -> f.terms(t -> t.field(filter.field())
+							.terms(v -> v.value(filter.values().stream().map(FieldValue::of).toList()))));
+				}
+			}
+			return b;
+		}));
+	}
+
+	private static Map<String, List<FacetValue>> facets(SearchResponse<JobDocument> response) {
+		Map<String, List<FacetValue>> facets = new LinkedHashMap<>();
+		for (Facet facet : Facet.values()) {
+			List<FacetValue> values = response.aggregations().get(facet.key).filter()
+					.aggregations().get("values").sterms().buckets().array().stream()
+					.map(bucket -> new FacetValue(bucket.key().stringValue(), bucket.docCount()))
+					.toList();
+			facets.put(facet.key, values);
+		}
+		return facets;
 	}
 
 	private static List<SortOptions> sortOptions(SearchQuery query) {

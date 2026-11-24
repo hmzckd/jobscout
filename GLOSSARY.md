@@ -33,3 +33,5 @@ Terms used in the code, tests and docs of JobScout.
 | Fuzziness | Typo tolerance measured in edits (insert, delete, replace a letter). `AUTO` allows 0 edits for short words, 1 for 3-5 letters and 2 for longer words. |
 | Filter | A yes/no condition (city, work mode, status). Filters do not change the score and Elasticsearch can cache them. |
 | Highlight | The matched words wrapped in `<em>` tags, so the UI can show why a job matched. |
+| Facet | A filter option with the number of matching jobs, such as `Ankara (34)`. Built with terms aggregations. |
+| Post filter | A filter applied to the hits after the aggregations are computed, so a selected facet does not hide its own other options. |

@@ -125,6 +125,37 @@ class SearchTests {
 	}
 
 	@Test
+	void facetsCountTheMatchingOpenJobs() {
+		SearchResult result = search("");
+
+		assertThat(result.facets().get("city")).containsExactly(
+				new FacetValue("Ankara", 3), new FacetValue("İstanbul", 1), new FacetValue("İzmir", 1));
+		assertThat(result.facets().get("workMode")).containsExactlyInAnyOrder(
+				new FacetValue("REMOTE", 2), new FacetValue("HYBRID", 2), new FacetValue("ONSITE", 1));
+		assertThat(result.facets().get("skill")).contains(new FacetValue("Java", 2));
+	}
+
+	@Test
+	void facetsFollowTheSearchText() {
+		SearchResult result = search("java");
+
+		assertThat(result.facets().get("city")).containsExactlyInAnyOrder(
+				new FacetValue("Ankara", 1), new FacetValue("İstanbul", 1));
+	}
+
+	@Test
+	void aSelectedFacetKeepsItsOtherOptionsButNarrowsTheRest() {
+		SearchResult result = search.search(new SearchQuery("", List.of("Ankara"), null, null, null, null, null,
+				0, 20));
+
+		assertThat(result.total()).isEqualTo(3);
+		assertThat(result.facets().get("city")).containsExactly(
+				new FacetValue("Ankara", 3), new FacetValue("İstanbul", 1), new FacetValue("İzmir", 1));
+		assertThat(result.facets().get("workMode")).containsExactlyInAnyOrder(
+				new FacetValue("REMOTE", 2), new FacetValue("HYBRID", 1));
+	}
+
+	@Test
 	void unknownWordFindsNothing() {
 		SearchResult result = search("muhasebe");
 
