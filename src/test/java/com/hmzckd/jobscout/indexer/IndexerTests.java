@@ -61,6 +61,23 @@ class IndexerTests {
 	}
 
 	@Test
+	void renamingACompanyUpdatesAllOfItsIndexedJobs() throws Exception {
+		String companyId = TestData.createCompany(mockMvc, "Eski Şirket Adı");
+		List<String> ids = List.of(createJob(companyId, "Go Geliştirici"), createJob(companyId, "Java Geliştirici"));
+		for (String id : ids) {
+			awaitDocument(id, doc -> doc.isPresent());
+		}
+
+		mockMvc.perform(put("/api/companies/" + companyId)
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("{\"name\":\"Yeni Şirket Adı\"}"));
+
+		for (String id : ids) {
+			awaitDocument(id, doc -> doc.map(d -> d.companyName().equals("Yeni Şirket Adı")).orElse(false));
+		}
+	}
+
+	@Test
 	void anOlderChangeNeverOverwritesANewerOne() {
 		String id = UUID.randomUUID().toString();
 
@@ -81,6 +98,14 @@ class IndexerTests {
 
 		assertThat(index.delete(id, 400)).isTrue();
 		assertThat(index.get(id)).isEmpty();
+	}
+
+	private String createJob(String companyId, String title) throws Exception {
+		String body = mockMvc.perform(post("/api/jobs")
+						.contentType(MediaType.APPLICATION_JSON)
+						.content(TestData.jobJson(companyId, title)))
+				.andReturn().getResponse().getContentAsString();
+		return JsonPath.read(body, "$.id");
 	}
 
 	private JobDocument awaitDocument(String id, java.util.function.Predicate<Optional<JobDocument>> condition) {

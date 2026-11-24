@@ -2,6 +2,7 @@ package com.hmzckd.jobscout.company;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -15,6 +16,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.hmzckd.jobscout.IntegrationTest;
+import com.hmzckd.jobscout.TestData;
 import com.jayway.jsonpath.JsonPath;
 
 @IntegrationTest
@@ -37,6 +39,21 @@ class CompanyTests {
 		mockMvc.perform(get("/api/companies/" + id))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.name").value("Kuzey Yazılım"));
+	}
+
+	@Test
+	void companyCanBeRenamed() throws Exception {
+		String id = TestData.createCompany(mockMvc, "Eski Ad");
+
+		mockMvc.perform(put("/api/companies/" + id)
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("{\"name\":\"Yeni Ad\"}"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.name").value("Yeni Ad"));
+		mockMvc.perform(put("/api/companies/" + UUID.randomUUID())
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("{\"name\":\"Yeni Ad\"}"))
+				.andExpect(status().isNotFound());
 	}
 
 	@Test

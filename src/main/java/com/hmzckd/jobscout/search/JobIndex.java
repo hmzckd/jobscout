@@ -10,10 +10,12 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.Conflicts;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch._types.Result;
 import co.elastic.clients.elasticsearch._types.VersionType;
 import co.elastic.clients.elasticsearch.core.GetResponse;
+import co.elastic.clients.json.JsonData;
 
 @Component
 public class JobIndex {
@@ -73,6 +75,23 @@ public class JobIndex {
 				return false;
 			}
 			throw e;
+		}
+		catch (IOException e) {
+			throw new UncheckedIOException(e);
+		}
+	}
+
+	public long renameCompany(String companyId, String companyName) {
+		try {
+			client.indices().refresh(r -> r.index(name));
+			return client.updateByQuery(u -> u
+					.index(name)
+					.query(q -> q.term(t -> t.field("companyId").value(companyId)))
+					.script(s -> s
+							.source(src -> src.scriptString("ctx._source.companyName = params.name"))
+							.params("name", JsonData.of(companyName)))
+					.conflicts(Conflicts.Proceed))
+					.updated();
 		}
 		catch (IOException e) {
 			throw new UncheckedIOException(e);

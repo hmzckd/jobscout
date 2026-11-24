@@ -23,6 +23,13 @@ public class CompanyRepository {
 				.update();
 	}
 
+	boolean rename(UUID id, String name) {
+		return jdbc.sql("UPDATE companies SET name = :name, updated_at = now() WHERE id = :id")
+				.param("id", id)
+				.param("name", name)
+				.update() == 1;
+	}
+
 	public boolean exists(UUID id) {
 		return jdbc.sql("SELECT EXISTS (SELECT 1 FROM companies WHERE id = :id)")
 				.param("id", id)

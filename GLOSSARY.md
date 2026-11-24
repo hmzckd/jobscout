@@ -38,3 +38,4 @@ Terms used in the code, tests and docs of JobScout.
 | Search as you type | A field type that also indexes word prefixes and word pairs, so `java ge` can match `Java Geliştirici` while typing. |
 | Normalizer | Like an analyzer for keyword fields: it lowercases and folds the whole value without splitting it into words. |
 | Collapse | Returning only the best hit for each value of a field; used to show every job title once in suggestions. |
+| Denormalization | Copying data (the company name) into each document so a search needs no join. The price is updating every copy when the original changes. |
