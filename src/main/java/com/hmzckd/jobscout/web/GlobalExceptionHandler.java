@@ -13,6 +13,11 @@ class GlobalExceptionHandler {
 		return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
 	}
 
+	@ExceptionHandler(ConflictException.class)
+	ProblemDetail handleConflict(ConflictException ex) {
+		return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+	}
+
 	@ExceptionHandler(NotFoundException.class)
 	ProblemDetail handleNotFound(NotFoundException ex) {
 		return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());

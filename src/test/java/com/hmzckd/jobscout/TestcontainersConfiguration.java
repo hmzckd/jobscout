@@ -42,6 +42,7 @@ public class TestcontainersConfiguration {
 		return new ElasticsearchContainer(DockerImageName.parse("elasticsearch:9.4.8")
 				.asCompatibleSubstituteFor("docker.elastic.co/elasticsearch/elasticsearch"))
 				.withEnv("xpack.security.enabled", "false")
+				.withEnv("action.auto_create_index", "false")
 				.withEnv("ES_JAVA_OPTS", "-Xms512m -Xmx512m");
 	}
 

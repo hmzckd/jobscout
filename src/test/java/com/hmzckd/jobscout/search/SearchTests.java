@@ -35,7 +35,7 @@ class SearchTests {
 		search = new JobSearch(client, index);
 		suggest = new JobSuggest(client, index);
 		client.indices().delete(d -> d.index(index.name()).ignoreUnavailable(true));
-		index.createIfMissing();
+		index.createIndex(index.name());
 		List<JobDocument> jobs = List.of(
 				job("1", "Kıdemli Java Geliştirici", "İstanbul", "HYBRID", "SENIOR", 90_000, 120_000,
 						List.of("Java", "Spring Boot"), "OPEN", "2026-11-20T10:00:00Z"),

@@ -39,3 +39,6 @@ Terms used in the code, tests and docs of JobScout.
 | Normalizer | Like an analyzer for keyword fields: it lowercases and folds the whole value without splitting it into words. |
 | Collapse | Returning only the best hit for each value of a field; used to show every job title once in suggestions. |
 | Denormalization | Copying data (the company name) into each document so a search needs no join. The price is updating every copy when the original changes. |
+| Alias | A second name that points to a real index. The application only knows the alias `jobs`, so the index behind it can be replaced in one atomic step. |
+| Reindex | Building a fresh index from PostgreSQL and switching the alias to it. |
+| Bulk API | Sending many index operations in one request; much faster than one request per document. |
