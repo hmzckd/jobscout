@@ -17,3 +17,10 @@ Terms used in the code, tests and docs of JobScout.
 | Stemming | Cutting words down to a common root so that `mühendisleri` and `mühendis` match. The Turkish stemmer is rule based and not perfect. |
 | Folding | Removing accents and Turkish letters (`ş` to `s`, `ı` to `i`) so that `gelistirici` matches `geliştirici`. Stored in the `.folded` sub-fields. |
 | Mapping | The schema of the search index: which fields exist, their types and which analyzer each one uses. |
+| WAL (write-ahead log) | PostgreSQL's journal of every committed change, written before the data files. Replication and CDC read it. |
+| Logical decoding | Turning WAL entries into row-level changes (insert, update, delete with column values). Needs `wal_level=logical`. |
+| Replication slot | A bookmark in the WAL kept by PostgreSQL for one reader (here Debezium), so no change is lost while the reader is away. |
+| Kafka Connect | A Kafka runtime for connectors that move data in or out of Kafka, managed through a REST API. |
+| Debezium | A set of Kafka Connect source connectors that turn database change logs into Kafka events. |
+| Change event | One Debezium message: `before`, `after`, `op` (`r` snapshot read, `c` create, `u` update, `d` delete) and `source` (LSN, transaction, timestamp). |
+| Snapshot | The first pass of the connector: it reads every existing row as `r` events, then continues from the WAL. |
