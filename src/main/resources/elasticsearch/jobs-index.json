@@ -1,0 +1,59 @@
+{
+  "settings": {
+    "number_of_shards": 1,
+    "number_of_replicas": 0,
+    "analysis": {
+      "filter": {
+        "turkish_lowercase": { "type": "lowercase", "language": "turkish" },
+        "turkish_stop": { "type": "stop", "stopwords": "_turkish_" },
+        "turkish_stemmer": { "type": "stemmer", "language": "turkish" }
+      },
+      "analyzer": {
+        "turkish_text": {
+          "tokenizer": "standard",
+          "filter": ["apostrophe", "turkish_lowercase", "turkish_stop", "turkish_stemmer"]
+        },
+        "folded_text": {
+          "tokenizer": "standard",
+          "filter": ["apostrophe", "turkish_lowercase", "asciifolding"]
+        }
+      }
+    }
+  },
+  "mappings": {
+    "dynamic": "strict",
+    "properties": {
+      "id": { "type": "keyword" },
+      "companyId": { "type": "keyword" },
+      "companyName": {
+        "type": "text",
+        "analyzer": "folded_text",
+        "fields": { "keyword": { "type": "keyword" } }
+      },
+      "title": {
+        "type": "text",
+        "analyzer": "turkish_text",
+        "fields": { "folded": { "type": "text", "analyzer": "folded_text" } }
+      },
+      "description": {
+        "type": "text",
+        "analyzer": "turkish_text",
+        "fields": { "folded": { "type": "text", "analyzer": "folded_text" } }
+      },
+      "city": {
+        "type": "keyword",
+        "fields": { "folded": { "type": "text", "analyzer": "folded_text" } }
+      },
+      "workMode": { "type": "keyword" },
+      "seniority": { "type": "keyword" },
+      "salaryMin": { "type": "integer" },
+      "salaryMax": { "type": "integer" },
+      "skills": {
+        "type": "keyword",
+        "fields": { "folded": { "type": "text", "analyzer": "folded_text" } }
+      },
+      "status": { "type": "keyword" },
+      "postedAt": { "type": "date" }
+    }
+  }
+}

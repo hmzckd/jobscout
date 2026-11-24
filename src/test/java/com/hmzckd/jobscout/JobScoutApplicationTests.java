@@ -8,16 +8,9 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
-import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.context.annotation.Import;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
 
-@SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
-@Import({ TestcontainersConfiguration.class, JobScoutApplicationTests.ThreadProbe.class })
+@IntegrationTest
 class JobScoutApplicationTests {
 
 	@LocalServerPort
@@ -44,15 +37,5 @@ class JobScoutApplicationTests {
 	private HttpResponse<String> get(String path) throws Exception {
 		HttpRequest request = HttpRequest.newBuilder(URI.create("http://localhost:" + port + path)).GET().build();
 		return http.send(request, HttpResponse.BodyHandlers.ofString());
-	}
-
-	@TestConfiguration
-	@RestController
-	static class ThreadProbe {
-
-		@GetMapping("/test/thread")
-		String thread() {
-			return "virtual=" + Thread.currentThread().isVirtual();
-		}
 	}
 }
