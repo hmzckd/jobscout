@@ -1,5 +1,7 @@
 package com.hmzckd.jobscout.indexer;
 
+import java.time.Clock;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,6 +12,8 @@ import org.springframework.stereotype.Component;
 import com.hmzckd.jobscout.search.JobDocument;
 import com.hmzckd.jobscout.search.JobIndex;
 
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import tools.jackson.databind.JsonNode;
 
 @Component
@@ -19,27 +23,44 @@ class JobChangeHandler {
 
 	private final JobIndex index;
 	private final CompanyNames companyNames;
+	private final MeterRegistry meters;
+	private final Clock clock;
+	private final Timer lag;
 
-	JobChangeHandler(JobIndex index, CompanyNames companyNames) {
+	JobChangeHandler(JobIndex index, CompanyNames companyNames, MeterRegistry meters) {
 		this.index = index;
 		this.companyNames = companyNames;
+		this.meters = meters;
+		this.clock = Clock.systemUTC();
+		this.lag = Timer.builder("jobscout.index.lag")
+				.description("Time from the commit in PostgreSQL until the change is in the search index")
+				.publishPercentiles(0.5, 0.95, 0.99)
+				.register(meters);
 	}
 
 	void handle(JsonNode event) {
 		String op = required(event, "op").asString();
-		long version = required(event.path("source"), "lsn").asLong();
-		switch (op) {
+		JsonNode source = required(event, "source");
+		long version = required(source, "lsn").asLong();
+		boolean applied = switch (op) {
 			case "c", "r", "u" -> {
 				JobDocument job = toDocument(required(event, "after"));
-				if (!index.upsert(job, version)) {
+				boolean written = index.upsert(job, version);
+				if (!written) {
 					log.debug("Skipped stale change of job {} at LSN {}", job.id(), version);
 				}
+				yield written;
 			}
-			case "d" -> {
-				String id = required(required(event, "before"), "id").asString();
-				index.delete(id, version);
+			case "d" -> index.delete(required(required(event, "before"), "id").asString(), version);
+			default -> {
+				log.debug("Ignoring change event with op {}", op);
+				yield false;
 			}
-			default -> log.debug("Ignoring change event with op {}", op);
+		};
+		meters.counter("jobscout.index.changes", "op", op, "result", applied ? "applied" : "skipped").increment();
+		if (applied && !"r".equals(op) && source.has("ts_ms")) {
+			long millis = clock.millis() - source.path("ts_ms").asLong();
+			lag.record(Duration.ofMillis(Math.max(0, millis)));
 		}
 	}
 

@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>JobScout</title>
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <header>
+    <h1>JobScout</h1>
+    <form id="search-form" autocomplete="off">
+      <div class="box">
+        <input id="q" type="search" placeholder="Pozisyon, beceri, şirket veya şehir: java ankara" aria-label="Ara">
+        <ul id="suggestions" role="listbox" hidden></ul>
+      </div>
+      <select id="sort" aria-label="Sıralama">
+        <option value="relevance">En alakalı</option>
+        <option value="newest">En yeni</option>
+      </select>
+    </form>
+  </header>
+  <main>
+    <aside id="facets"></aside>
+    <section>
+      <p id="summary"></p>
+      <ol id="results"></ol>
+      <nav id="pager">
+        <button id="prev" type="button">Önceki</button>
+        <span id="page"></span>
+        <button id="next" type="button">Sonraki</button>
+      </nav>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

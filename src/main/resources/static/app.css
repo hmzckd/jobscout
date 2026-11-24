@@ -1,0 +1,26 @@
+* { box-sizing: border-box; }
+body { margin: 0; font-family: system-ui, sans-serif; color: #1f2933; background: #f5f7fa; }
+header { background: #fff; border-bottom: 1px solid #e4e7eb; padding: 16px 24px; display: flex; gap: 24px; align-items: center; flex-wrap: wrap; }
+h1 { margin: 0; font-size: 22px; color: #2563eb; }
+form { display: flex; gap: 8px; flex: 1; min-width: 280px; }
+.box { position: relative; flex: 1; }
+#q { width: 100%; padding: 10px 12px; font-size: 16px; border: 1px solid #cbd2d9; border-radius: 6px; }
+select { padding: 8px; border: 1px solid #cbd2d9; border-radius: 6px; background: #fff; }
+#suggestions { position: absolute; z-index: 1; left: 0; right: 0; margin: 4px 0 0; padding: 4px 0; list-style: none; background: #fff; border: 1px solid #cbd2d9; border-radius: 6px; }
+#suggestions li { padding: 6px 12px; cursor: pointer; }
+#suggestions li:hover, #suggestions li.active { background: #eff6ff; }
+main { display: grid; grid-template-columns: 220px 1fr; gap: 24px; padding: 24px; max-width: 1100px; margin: 0 auto; }
+aside h2 { font-size: 13px; text-transform: uppercase; color: #616e7c; margin: 16px 0 6px; }
+aside label { display: flex; gap: 6px; font-size: 14px; padding: 2px 0; }
+aside .count { color: #7b8794; margin-left: auto; }
+#summary { color: #616e7c; margin-top: 0; }
+#results { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
+#results li { background: #fff; border: 1px solid #e4e7eb; border-radius: 8px; padding: 14px 16px; }
+#results h3 { margin: 0 0 4px; font-size: 17px; }
+#results .meta { color: #52606d; font-size: 14px; }
+#results .snippet { font-size: 14px; color: #3e4c59; margin: 8px 0 0; }
+#results .skills { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+#results .skills span { background: #eff6ff; color: #1e40af; font-size: 12px; padding: 2px 8px; border-radius: 999px; }
+em { font-style: normal; background: #fef08a; }
+#pager { display: flex; gap: 12px; align-items: center; justify-content: center; margin: 20px 0; }
+@media (max-width: 700px) { main { grid-template-columns: 1fr; } }
