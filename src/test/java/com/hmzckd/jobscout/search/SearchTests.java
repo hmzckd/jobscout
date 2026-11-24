@@ -27,11 +27,13 @@ class SearchTests {
 	ElasticsearchClient client;
 
 	private JobSearch search;
+	private JobSuggest suggest;
 
 	@BeforeAll
 	void indexSampleJobs() throws Exception {
 		JobIndex index = new JobIndex(client, "jobs-search-tests");
 		search = new JobSearch(client, index);
+		suggest = new JobSuggest(client, index);
 		client.indices().delete(d -> d.index(index.name()).ignoreUnavailable(true));
 		index.createIfMissing();
 		List<JobDocument> jobs = List.of(
@@ -153,6 +155,31 @@ class SearchTests {
 				new FacetValue("Ankara", 3), new FacetValue("İstanbul", 1), new FacetValue("İzmir", 1));
 		assertThat(result.facets().get("workMode")).containsExactlyInAnyOrder(
 				new FacetValue("REMOTE", 2), new FacetValue("HYBRID", 1));
+	}
+
+	@Test
+	void suggestsDistinctOpenTitlesWhileTyping() {
+		assertThat(suggest.suggest("jav", 8))
+				.containsExactlyInAnyOrder("Kıdemli Java Geliştirici", "Java Backend Geliştirici");
+		assertThat(suggest.suggest("java back", 8)).containsExactly("Java Backend Geliştirici");
+		assertThat(suggest.suggest("muhen", 8)).containsExactlyInAnyOrder("DevOps Mühendisi", "Veri Mühendisi");
+	}
+
+	@Test
+	void suggestionsStartingWithTheTextComeFirst() {
+		assertThat(suggest.suggest("java", 8).getFirst()).isEqualTo("Java Backend Geliştirici");
+	}
+
+	@Test
+	void veryShortTextSuggestsNothing() {
+		assertThat(suggest.suggest("j", 8)).isEmpty();
+		assertThat(suggest.suggest(null, 8)).isEmpty();
+	}
+
+	@Test
+	void suggestEndpointLimitsTheSize() throws Exception {
+		mockMvc.perform(get("/api/suggest").param("q", "java").param("size", "11")).andExpect(status().isBadRequest());
+		mockMvc.perform(get("/api/suggest").param("q", "java")).andExpect(status().isOk());
 	}
 
 	@Test

@@ -8,6 +8,12 @@
         "turkish_stop": { "type": "stop", "stopwords": "_turkish_" },
         "turkish_stemmer": { "type": "stemmer", "language": "turkish" }
       },
+      "normalizer": {
+        "folded_keyword": {
+          "type": "custom",
+          "filter": ["turkish_lowercase", "asciifolding"]
+        }
+      },
       "analyzer": {
         "turkish_text": {
           "tokenizer": "standard",
@@ -33,7 +39,12 @@
       "title": {
         "type": "text",
         "analyzer": "turkish_text",
-        "fields": { "folded": { "type": "text", "analyzer": "folded_text" } }
+        "fields": {
+          "folded": { "type": "text", "analyzer": "folded_text" },
+          "keyword": { "type": "keyword" },
+          "prefix": { "type": "keyword", "normalizer": "folded_keyword" },
+          "suggest": { "type": "search_as_you_type", "analyzer": "folded_text" }
+        }
       },
       "description": {
         "type": "text",

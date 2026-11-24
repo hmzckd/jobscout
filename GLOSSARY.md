@@ -35,3 +35,6 @@ Terms used in the code, tests and docs of JobScout.
 | Highlight | The matched words wrapped in `<em>` tags, so the UI can show why a job matched. |
 | Facet | A filter option with the number of matching jobs, such as `Ankara (34)`. Built with terms aggregations. |
 | Post filter | A filter applied to the hits after the aggregations are computed, so a selected facet does not hide its own other options. |
+| Search as you type | A field type that also indexes word prefixes and word pairs, so `java ge` can match `Java Geliştirici` while typing. |
+| Normalizer | Like an analyzer for keyword fields: it lowercases and folds the whole value without splitting it into words. |
+| Collapse | Returning only the best hit for each value of a field; used to show every job title once in suggestions. |
