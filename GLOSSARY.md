@@ -28,3 +28,8 @@ Terms used in the code, tests and docs of JobScout.
 | External version | A version number chosen by us, not by Elasticsearch. A write is accepted only if its version is higher than the stored one. |
 | At-least-once delivery | Every event is delivered, but some may be delivered twice. The consumer must be idempotent. |
 | Idempotent | Applying the same change twice leaves the same result as applying it once. |
+| Relevance score | How well a document matches the query (BM25). Matches in rare words and in short fields score higher. |
+| Boost | A weight on a field: a match in `title^3` counts three times as much as a match in `description`. |
+| Fuzziness | Typo tolerance measured in edits (insert, delete, replace a letter). `AUTO` allows 0 edits for short words, 1 for 3-5 letters and 2 for longer words. |
+| Filter | A yes/no condition (city, work mode, status). Filters do not change the score and Elasticsearch can cache them. |
+| Highlight | The matched words wrapped in `<em>` tags, so the UI can show why a job matched. |
