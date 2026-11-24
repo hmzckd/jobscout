@@ -24,3 +24,7 @@ Terms used in the code, tests and docs of JobScout.
 | Debezium | A set of Kafka Connect source connectors that turn database change logs into Kafka events. |
 | Change event | One Debezium message: `before`, `after`, `op` (`r` snapshot read, `c` create, `u` update, `d` delete) and `source` (LSN, transaction, timestamp). |
 | Snapshot | The first pass of the connector: it reads every existing row as `r` events, then continues from the WAL. |
+| LSN (log sequence number) | The position of a change in the WAL. It only grows, so it orders all committed changes. |
+| External version | A version number chosen by us, not by Elasticsearch. A write is accepted only if its version is higher than the stored one. |
+| At-least-once delivery | Every event is delivered, but some may be delivered twice. The consumer must be idempotent. |
+| Idempotent | Applying the same change twice leaves the same result as applying it once. |

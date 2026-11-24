@@ -3,12 +3,17 @@ package com.hmzckd.jobscout.search;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.ElasticsearchException;
+import co.elastic.clients.elasticsearch._types.Result;
+import co.elastic.clients.elasticsearch._types.VersionType;
+import co.elastic.clients.elasticsearch.core.GetResponse;
 
 @Component
 public class JobIndex {
@@ -16,7 +21,7 @@ public class JobIndex {
 	private final ElasticsearchClient client;
 	private final String name;
 
-	JobIndex(ElasticsearchClient client, @Value("${jobscout.search.index}") String name) {
+	public JobIndex(ElasticsearchClient client, @Value("${jobscout.search.index}") String name) {
 		this.client = client;
 		this.name = name;
 	}
@@ -40,22 +45,52 @@ public class JobIndex {
 		}
 	}
 
-	public void upsert(JobDocument job) {
+	public boolean upsert(JobDocument job, long version) {
 		try {
-			client.index(i -> i.index(name).id(job.id()).document(job));
+			client.index(i -> i.index(name).id(job.id()).document(job)
+					.version(version).versionType(VersionType.External));
+			return true;
+		}
+		catch (ElasticsearchException e) {
+			if (isVersionConflict(e)) {
+				return false;
+			}
+			throw e;
 		}
 		catch (IOException e) {
 			throw new UncheckedIOException(e);
 		}
 	}
 
-	public void delete(String id) {
+	public boolean delete(String id, long version) {
 		try {
-			client.delete(d -> d.index(name).id(id));
+			Result result = client.delete(d -> d.index(name).id(id)
+					.version(version).versionType(VersionType.External)).result();
+			return result == Result.Deleted;
+		}
+		catch (ElasticsearchException e) {
+			if (isVersionConflict(e)) {
+				return false;
+			}
+			throw e;
 		}
 		catch (IOException e) {
 			throw new UncheckedIOException(e);
 		}
+	}
+
+	public Optional<JobDocument> get(String id) {
+		try {
+			GetResponse<JobDocument> response = client.get(g -> g.index(name).id(id), JobDocument.class);
+			return response.found() ? Optional.of(response.source()) : Optional.empty();
+		}
+		catch (IOException e) {
+			throw new UncheckedIOException(e);
+		}
+	}
+
+	private static boolean isVersionConflict(ElasticsearchException e) {
+		return e.status() == 409;
 	}
 
 	public void refresh() {
