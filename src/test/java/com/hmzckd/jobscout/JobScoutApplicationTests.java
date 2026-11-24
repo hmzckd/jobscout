@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
-@Import(JobScoutApplicationTests.ThreadProbe.class)
+@Import({ TestcontainersConfiguration.class, JobScoutApplicationTests.ThreadProbe.class })
 class JobScoutApplicationTests {
 
 	@LocalServerPort
